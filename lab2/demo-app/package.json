@@ -1,0 +1,16 @@
+{
+  "name": "demo-app",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "Valeriia Reznyk",
+  "license": "ISC",
+  "dependencies": {
+    "lab2": "file:../library"
+  }
+}
