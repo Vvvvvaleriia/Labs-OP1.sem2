@@ -1,14 +1,23 @@
-'use strict'
+"use strict";
 
-function memoize(fn){
-    const cache = Object.create(null);
-    return (...args) => {
-        const key = args.join(',');
+function memoize(fn, limit) {
+	const cache = new Map();
+	return (...args) => {
+		const key = JSON.stringify(args);
 
-        if (key in cache) return cache[key];
+		if (cache.has(key)) {
+			const newValue = cache.get(key);
+			cache.delete(key);
+			cache.set(key, newValue);
+			return newValue;
+		}
 
-        const result = fn(...args);
-        cache[key] = result;
-        return result;
-        }
-    }
+		if (cache.size >= limit) {
+			const oldKey = cache.keys().next().value;
+			cache.delete(oldKey);
+		}
+		const result = fn(...args);
+		cache.set(key, result);
+		return result;
+	};
+}
