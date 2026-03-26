@@ -34,7 +34,7 @@ function memoize(fn, options = {}) {
 			}
 		} else if (strategy === "CUSTOM" && typeof customFn === "function") {
 			const keyToDelete = customFn(cache);
-			if (keyToDelete) cache.delete(keyToDelete);
+			if (keyToDelete !== undefined) cache.delete(keyToDelete);
 		}
 	}
 
@@ -44,18 +44,27 @@ function memoize(fn, options = {}) {
 
 		if (cache.has(key)) {
 			const value = cache.get(key);
-			value.count++;
-			value.timestamp = now;
 
-			if (strategy === "LRU") {
+			if (timeToLive > 0 && now - value.timestamp >= timeToLive) {
 				cache.delete(key);
-				cache.set(key, value);
+			} else {
+				value.count++;
+				value.timestamp = now;
+
+				if (strategy === "LRU") {
+					cache.delete(key);
+					cache.set(key, value);
+				}
+				return value.value;
 			}
-			return value.value;
 		}
 
 		const result = fn(...args);
-		cache.set(key, { value: result, count: 1, timestamp: now });
+		cache.set(key, {
+			value: result,
+			count: 1,
+			timestamp: now,
+		});
 
 		cutCache();
 
@@ -68,6 +77,18 @@ function sum(a, b) {
 	return a + b;
 }
 
-const memoAdd = memoize(sum, { limit: 3, strategy: "LRU" });
+const cusDelete = (cache) => {
+	return cache.keys().next().value;
+};
+
+const memoAdd = memoize(sum, {
+	limit: 3,
+	strategy: "CUSTOM",
+	customFn: cusDelete,
+});
+console.log(memoAdd(1, 2));
 console.log(memoAdd(2, 3));
+console.log(memoAdd(1, 2));
 console.log(memoAdd(2, 3));
+console.log(memoAdd(3, 4));
+console.log(memoAdd(1, 2));
