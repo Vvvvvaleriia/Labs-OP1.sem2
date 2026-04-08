@@ -26,7 +26,7 @@ class biDirectionalPriorityQueue {
 					oldest = item;
 				}
 			}
-			return oldest;
+			return oldest.item;
 		}
 
 		if (option === "newest") {
@@ -36,7 +36,27 @@ class biDirectionalPriorityQueue {
 					newest = item;
 				}
 			}
-			return newest;
+			return newest.item;
+		}
+
+		if (option === "highest") {
+			let maxPriority = this.queue[0];
+			for (const item of this.queue) {
+				if (item.priority > maxPriority.priority) {
+					maxPriority = item;
+				}
+			}
+			return maxPriority.item;
+		}
+
+		if (option === "lowest") {
+			let minPriority = this.queue[0];
+			for (const item of this.queue) {
+				if (item.priority < minPriority.priority) {
+					minPriority = item;
+				}
+			}
+			return minPriority.item;
 		}
 	}
 }
@@ -46,7 +66,9 @@ test.enqueue("dog", 1);
 test.enqueue("cat", 4);
 test.enqueue("fish", 2);
 
-console.log(test.peek("oldest"));
-console.log(test.peek("newest"));
+console.log(`The oldest is ${test.peek("oldest")}`);
+console.log(`The newest is ${test.peek("newest")}`);
+console.log(`The highest priority has ${test.peek("highest")}`);
+console.log(`The lowest priority has ${test.peek("lowest")}`);
 
 console.log(test.queue);
