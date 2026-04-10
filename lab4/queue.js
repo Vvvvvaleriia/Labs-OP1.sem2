@@ -10,7 +10,7 @@ class BiDirectionalPriorityQueue {
 		this.queue.push({
 			item,
 			priority,
-			priorityIndex: this.queueCounter,
+			queueIndex: this.queueCounter,
 		});
 
 		this.queueCounter++;
@@ -22,7 +22,7 @@ class BiDirectionalPriorityQueue {
 		if (option === "oldest") {
 			let oldest = this.queue[0];
 			for (const item of this.queue) {
-				if (item.priorityIndex < oldest.priorityIndex) {
+				if (item.queueIndex < oldest.queueIndex) {
 					oldest = item;
 				}
 			}
@@ -32,7 +32,7 @@ class BiDirectionalPriorityQueue {
 		if (option === "newest") {
 			let newest = this.queue[0];
 			for (const item of this.queue) {
-				if (item.priorityIndex > newest.priorityIndex) {
+				if (item.queueIndex > newest.queueIndex) {
 					newest = item;
 				}
 			}
@@ -66,7 +66,7 @@ class BiDirectionalPriorityQueue {
 		if (option === "oldest") {
 			let oldest = this.queue[0];
 			for (const item of this.queue) {
-				if (item.priorityIndex < oldest.priorityIndex) {
+				if (item.queueIndex < oldest.queueIndex) {
 					oldest = item;
 				}
 			}
@@ -79,7 +79,7 @@ class BiDirectionalPriorityQueue {
 		if (option === "newest") {
 			let newest = this.queue[0];
 			for (const item of this.queue) {
-				if (item.priorityIndex > newest.priorityIndex) {
+				if (item.queueIndex > newest.queueIndex) {
 					newest = item;
 				}
 			}
@@ -119,7 +119,7 @@ class BiDirectionalPriorityQueue {
 	}
 }
 
-const test = new biDirectionalPriorityQueue();
+const test = new BiDirectionalPriorityQueue();
 test.enqueue("dog", 4);
 test.enqueue("horse", 3);
 test.enqueue("cat", 1);
