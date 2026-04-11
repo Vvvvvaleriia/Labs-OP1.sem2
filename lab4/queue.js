@@ -16,106 +16,43 @@ class BiDirectionalPriorityQueue {
 		this.queueCounter++;
 	}
 
+	#findElem(option) {
+		let elem = this.queue[0];
+
+		for (const item of this.queue) {
+			if (option === "oldest" && item.queueIndex < elem.queueIndex) {
+				elem = item;
+			}
+
+			if (option === "newest" && item.queueIndex > elem.queueIndex) {
+				elem = item;
+			}
+
+			if (option === "highest" && item.priority > elem.priority) {
+				elem = item;
+			}
+
+			if (option === "lowest" && item.priority < elem.priority) {
+				elem = item;
+			}
+		}
+		return elem;
+	}
+
 	peek(option) {
-		if (this.queue.length === 0) return null;
-
-		if (option === "oldest") {
-			let oldest = this.queue[0];
-			for (const item of this.queue) {
-				if (item.queueIndex < oldest.queueIndex) {
-					oldest = item;
-				}
-			}
-			return oldest.item;
+		if (this.queue.length === 0) {
+			return null;
 		}
-
-		if (option === "newest") {
-			let newest = this.queue[0];
-			for (const item of this.queue) {
-				if (item.queueIndex > newest.queueIndex) {
-					newest = item;
-				}
-			}
-			return newest.item;
-		}
-
-		if (option === "highest") {
-			let maxPriority = this.queue[0];
-			for (const item of this.queue) {
-				if (item.priority > maxPriority.priority) {
-					maxPriority = item;
-				}
-			}
-			return maxPriority.item;
-		}
-
-		if (option === "lowest") {
-			let minPriority = this.queue[0];
-			for (const item of this.queue) {
-				if (item.priority < minPriority.priority) {
-					minPriority = item;
-				}
-			}
-			return minPriority.item;
-		}
+		return this.#findElem(option).item;
 	}
 
 	dequeue(option) {
 		if (this.queue.length === 0) return null;
 
-		if (option === "oldest") {
-			let oldest = this.queue[0];
-			for (const item of this.queue) {
-				if (item.queueIndex < oldest.queueIndex) {
-					oldest = item;
-				}
-			}
-			let index = this.queue.indexOf(oldest);
-			this.queue.splice(index, 1);
-
-			return oldest.item;
-		}
-
-		if (option === "newest") {
-			let newest = this.queue[0];
-			for (const item of this.queue) {
-				if (item.queueIndex > newest.queueIndex) {
-					newest = item;
-				}
-			}
-			let index = this.queue.indexOf(newest);
-			this.queue.splice(index, 1);
-
-			return newest.item;
-		}
-
-		if (option === "highest") {
-			let maxPriority = this.queue[0];
-			for (const item of this.queue) {
-				if (item.priority > maxPriority.priority) {
-					maxPriority = item;
-				}
-			}
-
-			let index = this.queue.indexOf(maxPriority);
-			this.queue.splice(index, 1);
-
-			return maxPriority.item;
-		}
-
-		if (option === "lowest") {
-			let minPriority = this.queue[0];
-			for (const item of this.queue) {
-				if (item.priority < minPriority.priority) {
-					minPriority = item;
-				}
-			}
-
-			let index = this.queue.indexOf(minPriority);
-			this.queue.splice(index, 1);
-
-			return minPriority.item;
-		}
+		const elem = this.#findElem(option);
+		const index = this.queue.indexOf(elem);
+		this.queue.splice(index, 1);
+		return elem.item;
 	}
 }
 
