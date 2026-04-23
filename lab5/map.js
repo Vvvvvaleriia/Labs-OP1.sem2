@@ -19,7 +19,19 @@ function asyncCallbackMap(array, asyncFn, done) {
 asyncCallbackMap(
 	[1, 2, 3],
 	(x, cb) => {
-		setTimeout(() => cb(x * 2), 500);
+		setTimeout(() => cb(x * 2), 200);
 	},
 	(result) => console.log(result),
 );
+
+function promiseMap(array, asyncFn) {
+	return Promise.all(array.map(asyncFn));
+}
+
+function double(x) {
+	return new Promise((resolve) => {
+		setTimeout(() => resolve(x * 2), 500);
+	});
+}
+
+promiseMap([4, 5, 6], double).then((result) => console.log(result));
