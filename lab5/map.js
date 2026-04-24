@@ -35,3 +35,11 @@ function double(x) {
 }
 
 promiseMap([4, 5, 6], double).then((result) => console.log(result));
+
+async function asncExample() {
+	const result = await promiseMap([7, 8, 9], double);
+
+	console.log(result);
+}
+
+asncExample();
