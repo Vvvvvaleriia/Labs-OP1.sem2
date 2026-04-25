@@ -1,11 +1,10 @@
 "use strict";
 
-const timers = [];
-
-function asyncCallbackMap(array, asyncFn, done, signal, timers) {
+function asyncCallbackMap(array, asyncFn, done, signal) {
 	const result = [];
 	let complete = 0;
 	let finished = false;
+	let timers = [];
 
 	if (signal?.aborted) {
 		finished = true;
@@ -18,6 +17,7 @@ function asyncCallbackMap(array, asyncFn, done, signal, timers) {
 			finished = true;
 			signal?.removeEventListener("abort", onAbort);
 			timers.forEach(clearTimeout);
+			timers.length = 0;
 			done(new Error("Aborted"));
 		}
 	};
@@ -27,25 +27,31 @@ function asyncCallbackMap(array, asyncFn, done, signal, timers) {
 	for (let i = 0; i < array.length; i++) {
 		if (finished) break;
 
-		asyncFn(array[i], (err, res) => {
-			if (finished) return;
+		asyncFn(
+			array[i],
+			(err, res) => {
+				if (finished) return;
 
-			if (err) {
-				finished = true;
-				signal?.removeEventListener("abort", onAbort);
-				done(err);
-				return;
-			}
+				if (err) {
+					finished = true;
+					signal?.removeEventListener("abort", onAbort);
+					done(err);
+					return;
+				}
 
-			result[i] = res;
-			complete++;
+				result[i] = res;
+				complete++;
 
-			if (complete === array.length) {
-				finished = true;
-				signal?.removeEventListener("abort", onAbort);
-				done(null, result);
-			}
-		});
+				if (complete === array.length) {
+					finished = true;
+					signal?.removeEventListener("abort", onAbort);
+					timers.forEach(clearTimeout);
+					timers.length = 0;
+					done(null, result);
+				}
+			},
+			timers,
+		);
 	}
 }
 
@@ -96,36 +102,47 @@ function promiseMap(array, asyncFn, signal) {
 
 async function asyncExample() {
 	try {
-		const result = await promiseMap([7, 8, 9], double, stop.signal);
+		const result = await promiseMap([7, 8, 9], double, stopExample.signal);
 		console.log(result);
 	} catch (err) {
-		console.log("Error", err.message);
+		console.log("Async Error", err.message);
 	}
 }
 
-const stop = new AbortController();
+const stopCallbackMap = new AbortController();
+const stopPromiseMap = new AbortController();
+const stopExample = new AbortController();
 
 asyncCallbackMap(
 	[1, 2, 3, 4],
-	(x, cb) => {
+	(x, cb, timers) => {
 		const id = setTimeout(() => cb(null, x * 2), 200);
 		timers.push(id);
 	},
 	(err, result) => {
 		if (err) {
-			console.log("Error", err.message);
+			console.log("Callback Error", err.message);
 			return;
 		}
 		console.log(result);
 	},
-	stop.signal,
-	timers,
+	stopCallbackMap.signal,
 );
 
 setTimeout(() => {
-	console.log("Aborted");
-	stop.abort();
+	console.log("Aborted callbackMap");
+	stopCallbackMap.abort();
 }, 300);
+
+setTimeout(() => {
+	console.log("Abort promiseMap");
+	stopPromiseMap.abort();
+}, 350);
+
+setTimeout(() => {
+	console.log("Abort asyncExample");
+	stopExample.abort();
+}, 400);
 
 function double(x) {
 	return new Promise((resolve) => {
@@ -133,12 +150,12 @@ function double(x) {
 	});
 }
 
-promiseMap([4, 5, 6], double, stop.signal)
+promiseMap([4, 5, 6], double, stopPromiseMap.signal)
 	.then((result) => {
 		console.log(result);
 	})
 	.catch((err) => {
-		console.log(err.message);
+		console.log("Promise Error", err.message);
 	});
 
 asyncExample();
