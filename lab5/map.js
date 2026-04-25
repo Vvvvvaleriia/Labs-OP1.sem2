@@ -76,9 +76,9 @@ function promiseMap(array, asyncFn, signal) {
 		signal?.addEventListener("abort", onAbort);
 
 		for (let i = 0; i < array.length; i++) {
-			asyncFn(array[i])
+			asyncFn(array[i], signal)
 				.then((res) => {
-					if (finished || signal?.aborted) return;
+					if (finished) return;
 
 					result[i] = res;
 					complete++;
@@ -144,9 +144,22 @@ setTimeout(() => {
 	stopExample.abort();
 }, 400);
 
-function double(x) {
-	return new Promise((resolve) => {
-		setTimeout(() => resolve(x * 2), 500);
+function double(x, signal) {
+	return new Promise((resolve, reject) => {
+		if (signal?.aborted) {
+			clearTimeout(id);
+			reject(new Error("Aborted"));
+			return;
+		}
+
+		const id = setTimeout(() => resolve(x * 2), 500);
+
+		const onAbort = () => {
+			clearTimeout(id);
+			reject(new Error("Aborted"));
+		};
+
+		signal?.addEventListener("abort", onAbort, { once: true });
 	});
 }
 
