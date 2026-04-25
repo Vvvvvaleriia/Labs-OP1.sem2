@@ -1,43 +1,131 @@
 "use strict";
 
-function asyncCallbackMap(array, asyncFn, done, signal) {
+const timers = [];
+
+function asyncCallbackMap(array, asyncFn, done, signal, timers) {
 	const result = [];
 	let complete = 0;
+	let finished = false;
 
-	if (signal?.aborted) return;
+	if (signal?.aborted) {
+		finished = true;
+		done(new Error("Aborted"));
+		return;
+	}
+
+	const onAbort = () => {
+		if (!finished) {
+			finished = true;
+			signal?.removeEventListener("abort", onAbort);
+			timers.forEach(clearTimeout);
+			done(new Error("Aborted"));
+		}
+	};
+
+	signal?.addEventListener("abort", onAbort);
 
 	for (let i = 0; i < array.length; i++) {
-		asyncFn(array[i], (res) => {
-			if (signal?.aborted) return;
+		if (finished) break;
+
+		asyncFn(array[i], (err, res) => {
+			if (finished) return;
+
+			if (err) {
+				finished = true;
+				signal?.removeEventListener("abort", onAbort);
+				done(err);
+				return;
+			}
+
 			result[i] = res;
 			complete++;
 
 			if (complete === array.length) {
-				done(result);
+				finished = true;
+				signal?.removeEventListener("abort", onAbort);
+				done(null, result);
 			}
 		});
+	}
+}
+
+function promiseMap(array, asyncFn, signal) {
+	return new Promise((resolve, reject) => {
+		const result = [];
+		let complete = 0;
+		let finished = false;
+
+		if (signal?.aborted) {
+			return reject(new Error("Aborted"));
+		}
+
+		const onAbort = () => {
+			if (!finished) {
+				finished = true;
+				signal?.removeEventListener("abort", onAbort);
+				reject(new Error("Aborted"));
+			}
+		};
+
+		signal?.addEventListener("abort", onAbort);
+
+		for (let i = 0; i < array.length; i++) {
+			asyncFn(array[i])
+				.then((res) => {
+					if (finished || signal?.aborted) return;
+
+					result[i] = res;
+					complete++;
+
+					if (complete === array.length) {
+						finished = true;
+						signal?.removeEventListener("abort", onAbort);
+						resolve(result);
+					}
+				})
+				.catch((err) => {
+					if (!finished) {
+						finished = true;
+						signal?.removeEventListener("abort", onAbort);
+						reject(err);
+					}
+				});
+		}
+	});
+}
+
+async function asyncExample() {
+	try {
+		const result = await promiseMap([7, 8, 9], double, stop.signal);
+		console.log(result);
+	} catch (err) {
+		console.log("Error", err.message);
 	}
 }
 
 const stop = new AbortController();
 
 asyncCallbackMap(
-	[1, 2, 3, 4, 5, 6, 7],
+	[1, 2, 3, 4],
 	(x, cb) => {
-		setTimeout(() => cb(x * 2), 200);
+		const id = setTimeout(() => cb(null, x * 2), 200);
+		timers.push(id);
 	},
-	(result) => console.log(result),
+	(err, result) => {
+		if (err) {
+			console.log("Error", err.message);
+			return;
+		}
+		console.log(result);
+	},
 	stop.signal,
+	timers,
 );
 
 setTimeout(() => {
-	console.log("Stop");
+	console.log("Aborted");
 	stop.abort();
-}, 210);
-
-function promiseMap(array, asyncFn) {
-	return Promise.all(array.map(asyncFn));
-}
+}, 300);
 
 function double(x) {
 	return new Promise((resolve) => {
@@ -45,12 +133,12 @@ function double(x) {
 	});
 }
 
-promiseMap([4, 5, 6], double).then((result) => console.log(result));
+promiseMap([4, 5, 6], double, stop.signal)
+	.then((result) => {
+		console.log(result);
+	})
+	.catch((err) => {
+		console.log(err.message);
+	});
 
-async function asncExample() {
-	const result = await promiseMap([7, 8, 9], double);
-
-	console.log(result);
-}
-
-asncExample();
+asyncExample();
