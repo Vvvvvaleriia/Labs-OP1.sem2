@@ -1,5 +1,7 @@
 "use strict";
 
+const userDiv = document.querySelector(".users");
+
 async function* createUsers(numOfUsers, batchSize = 2) {
 	let batch = [];
 
@@ -30,3 +32,18 @@ function renderUsers(user) {
 		</div>
 	`;
 }
+
+async function processUsers(generator) {
+	for await (const batch of generator) {
+		const html = batch.map(renderUsers).join("");
+		userDiv.insertAdjacentHTML("beforeend", html);
+	}
+}
+
+function render() {
+	userDiv.innerHTML = "";
+
+	const usersStream = createUsers(15, 2);
+	processUsers(usersStream);
+}
+render();
