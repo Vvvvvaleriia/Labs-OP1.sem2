@@ -8,17 +8,18 @@ async function* createUsers(numOfUsers, batchSize = 2) {
 	for (let i = 1; i <= numOfUsers; i++) {
 		const user = {
 			name: `User: ${i}`,
-			text: `text - ${i}`,
 		};
 		batch.push(user);
 
 		if (batch.length === batchSize) {
+			await new Promise((resolve) => setTimeout(resolve, 100));
 			yield batch;
 			batch = [];
 		}
 	}
 
 	if (batch.length) {
+		await new Promise((resolve) => setTimeout(resolve, 100));
 		yield batch;
 	}
 }
@@ -27,8 +28,6 @@ function renderUsers(user) {
 	return `
 		<div>
 			<h3>${user.name}</h3>
-			<p>${user.text}</p>
-
 		</div>
 	`;
 }
@@ -43,7 +42,7 @@ async function processUsers(generator) {
 function render() {
 	userDiv.innerHTML = "";
 
-	const usersStream = createUsers(15, 2);
+	const usersStream = createUsers(30, 3);
 	processUsers(usersStream);
 }
 render();
