@@ -10,4 +10,14 @@ class EventEmitter {
 			this.events[event] = [listener];
 		}
 	}
+
+	off(event, listener) {
+		this.events[event] = this.events[event].filter((l) => l !== listener);
+	}
+
+	emit(event, ...data) {
+		for (const listener of this.events[event]) {
+			listener(...data);
+		}
+	}
 }
